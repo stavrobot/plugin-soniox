@@ -1,0 +1,19 @@
+{
+  "name": "text_to_speech",
+  "description": "Convert text to speech using Soniox. Returns an MP3 audio file. Each call accepts at most 5000 characters, and the audio is silently cut at 2 minutes, so split long text across calls. Set language to the language the text is written in.",
+  "entrypoint": "run.py",
+  "parameters": {
+    "text": {
+      "type": "string",
+      "description": "The text to convert to speech, up to 5000 characters."
+    },
+    "voice": {
+      "type": "string",
+      "description": "Soniox voice name or ID. Omit to use the configured default."
+    },
+    "language": {
+      "type": "string",
+      "description": "ISO language code of the text, for example en or el. Omit to use the configured default."
+    }
+  }
+}
