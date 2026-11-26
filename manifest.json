@@ -10,32 +10,38 @@
     "default_voice": {
       "description": "Soniox voice name or ID for text-to-speech when the caller does not specify one.",
       "required": false,
-      "default": "Sebastian"
+      "default": "Sebastian",
+      "secret": false
     },
     "default_language": {
       "description": "ISO language code for text-to-speech when the caller does not specify one.",
       "required": false,
-      "default": "en"
+      "default": "en",
+      "secret": false
     },
     "language_hints": {
       "description": "Comma-separated language hints for speech-to-text, for example el,en.",
       "required": false,
-      "default": "el,en"
+      "default": "el,en",
+      "secret": false
     },
     "tts_model": {
       "description": "Soniox text-to-speech model ID.",
       "required": false,
-      "default": "tts-rt-v2"
+      "default": "tts-rt-v2",
+      "secret": false
     },
     "stt_model": {
       "description": "Soniox speech-to-text model ID.",
       "required": false,
-      "default": "stt-async-v6"
+      "default": "stt-async-v6",
+      "secret": false
     },
     "region": {
       "description": "Soniox region. One of: us, eu, jp, in.",
       "required": false,
-      "default": "us"
+      "default": "us",
+      "secret": false
     }
   }
 }
