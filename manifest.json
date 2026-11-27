@@ -11,49 +11,55 @@
       "description": "Soniox voice name or ID for text-to-speech when the caller does not specify one.",
       "required": false,
       "default": "Sebastian",
-      "secret": false
+      "type": "text"
     },
     "default_language": {
       "description": "ISO language code for text-to-speech when the caller does not specify one.",
       "required": false,
       "default": "en",
-      "secret": false
+      "type": "text"
     },
     "default_speed": {
       "description": "Speech speed from 0.7 to 1.3, where 1.0 is normal. Used when the caller does not specify a speed.",
       "required": false,
       "default": 1.0,
-      "secret": false
+      "type": "number"
     },
     "default_reduce_silence": {
       "description": "Whether to shorten pauses between words. Only works on models that support it. Used when the caller does not specify a value.",
       "required": false,
       "default": false,
-      "secret": false
+      "type": "boolean"
     },
     "language_hints": {
       "description": "Comma-separated language hints for speech-to-text, for example el,en.",
       "required": false,
       "default": "el,en",
-      "secret": false
+      "type": "text"
     },
     "tts_model": {
       "description": "Soniox text-to-speech model ID.",
       "required": false,
       "default": "tts-rt-v2",
-      "secret": false
+      "type": "text"
     },
     "stt_model": {
       "description": "Soniox speech-to-text model ID.",
       "required": false,
       "default": "stt-async-v6",
-      "secret": false
+      "type": "text"
     },
     "region": {
       "description": "Soniox region. One of: us, eu, jp, in.",
       "required": false,
       "default": "us",
-      "secret": false
+      "type": "select",
+      "options": [
+        "us",
+        "eu",
+        "jp",
+        "in"
+      ]
     }
   }
 }
