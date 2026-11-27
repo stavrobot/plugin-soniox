@@ -32,7 +32,8 @@ Then give it your API key:
 
 ## Tools
 
-- `text_to_speech`: turns text into an MP3 file. You can choose a voice, a language, a speed from `0.7` to `1.3`, and whether to shorten the pauses between words. Silence reduction only works on models that support it. A request can hold up to 5000 characters, and Soniox stops the audio after 2 minutes, so Stavrobot splits longer text.
+- `text_to_speech`: turns short text into an MP3 file. You can choose a voice, a language, a speed from `0.7` to `1.3`, and whether to shorten the pauses between words. Silence reduction only works on models that support it. A request can hold up to about 300 characters, roughly 20 seconds of audio. For longer text, use `text_to_speech_long`.
+- `text_to_speech_long`: turns long text into an MP3 file, delivered asynchronously as a separate message. Soniox silently cuts the audio at 2 minutes, which is about 1800 characters at normal speed and less at slower speeds, so Stavrobot keeps each call to about 1800 characters and splits longer text. Calls cannot be batched. The voice, language, speed, and silence options work the same as `text_to_speech`.
 - `speech_to_text`: transcribes an audio file and returns the text. Supported formats include ogg (Signal voice notes), mp3, m4a, wav, flac, aac and webm. A transcription must finish in about 20 seconds, so very long recordings fail with an error. The plugin deletes the uploaded audio and the transcript from Soniox when it is done. If a transcription times out, Soniox does not allow it to be deleted while it is still running, so the transcript stays in your Soniox project until Soniox removes it after 30 days. The uploaded audio is still deleted.
 
 ## Usage

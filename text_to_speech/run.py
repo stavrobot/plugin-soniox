@@ -21,8 +21,12 @@ KNOWN_PARAMETERS: set[str] = {
     "reduce_silence",
 }
 OUTPUT_FILENAME = "output.mp3"
-# The plugin runner kills a tool at 30 seconds. Timing out first lets us report a
-# Soniox error instead of dying with no explanation.
+# requests applies this as a connect timeout and as a read timeout between
+# received bytes, not as a limit on the whole response. Soniox streams the audio,
+# so a two-minute clip for text_to_speech_long is not cut off; the timeout only
+# catches a stalled connection. It does not keep the sync tool inside the
+# runner's 30-second kill, which is why that tool's description asks for short
+# text.
 TIMEOUT_SECONDS = 25
 # Region "us" is the default and has no regional prefix in its hostname, while the
 # others embed the region, so the mapping cannot be derived uniformly.
@@ -32,8 +36,9 @@ TTS_HOSTS: dict[str, str] = {
     "jp": "tts-rt.jp.soniox.com",
     "in": "tts-rt.in.soniox.com",
 }
-# The tool runs inside a Docker container where the working directory is
-# text_to_speech/, so the plugin config lives one level up.
+# The runner sets the working directory to the tool's own directory, one level
+# below the plugin root, so this also works for text_to_speech_long, which
+# reuses this script.
 CONFIG_PATH = pathlib.Path("../config.json")
 
 
