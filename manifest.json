@@ -19,6 +19,18 @@
       "default": "en",
       "secret": false
     },
+    "default_speed": {
+      "description": "Speech speed from 0.7 to 1.3, where 1.0 is normal. Used when the caller does not specify a speed.",
+      "required": false,
+      "default": 1.0,
+      "secret": false
+    },
+    "default_reduce_silence": {
+      "description": "Whether to shorten pauses between words. Only works on models that support it. Used when the caller does not specify a value.",
+      "required": false,
+      "default": false,
+      "secret": false
+    },
     "language_hints": {
       "description": "Comma-separated language hints for speech-to-text, for example el,en.",
       "required": false,

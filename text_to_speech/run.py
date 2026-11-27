@@ -13,7 +13,13 @@ from typing import TypedDict
 import requests
 
 
-KNOWN_PARAMETERS: set[str] = {"text", "voice", "language"}
+KNOWN_PARAMETERS: set[str] = {
+    "text",
+    "voice",
+    "language",
+    "speed",
+    "reduce_silence",
+}
 OUTPUT_FILENAME = "output.mp3"
 # The plugin runner kills a tool at 30 seconds. Timing out first lets us report a
 # Soniox error instead of dying with no explanation.
@@ -35,14 +41,18 @@ class Config(TypedDict):
     api_key: str
     default_voice: str
     default_language: str
+    # The settings page saves every value as a string, so these may arrive as
+    # "1.0" and "false" rather than as a number and a boolean.
+    default_speed: float | str
+    default_reduce_silence: bool | str
     language_hints: str
     tts_model: str
     stt_model: str
     region: str
 
 
-def read_parameters() -> dict[str, str]:
-    raw: dict[str, str] = json.load(sys.stdin)
+def read_parameters() -> dict[str, str | float | bool]:
+    raw: dict[str, str | float | bool] = json.load(sys.stdin)
     unknown = set(raw.keys()) - KNOWN_PARAMETERS
     if unknown:
         print(f"Unknown parameters: {sorted(unknown)}", file=sys.stderr)
@@ -59,6 +69,23 @@ def read_config() -> Config:
     # InvalidHeader and include the full header value, leaking the key to stderr.
     config["api_key"] = config["api_key"].strip()
     return config
+
+
+def parse_reduce_silence(value: bool | str) -> bool:
+    """Parse a config boolean without truthiness, since "false" is truthy.
+
+    The settings page stores the value as the string "true" or "false", while a
+    hand-written config may use a real boolean.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.lower() in {"true", "false"}:
+        return value.lower() == "true"
+    print(
+        f"Invalid default_reduce_silence: {value!r}. Use true or false.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 
 def collapse_whitespace(text: str) -> str:
@@ -110,6 +137,8 @@ def call_text_to_speech_api(
     text: str,
     voice: str,
     language: str,
+    speed: float,
+    reduce_silence: bool,
     model: str,
     region: str,
     api_key: str,
@@ -122,6 +151,8 @@ def call_text_to_speech_api(
             "model": model,
             "language": language,
             "voice": voice,
+            "speed": speed,
+            "reduce_silence": reduce_silence,
             "audio_format": "mp3",
             "text": text,
         },
@@ -153,11 +184,17 @@ def main() -> None:
     # for a specific request, so the config values are the defaults here.
     voice = parameters.get("voice", config["default_voice"])
     language = parameters.get("language", config["default_language"])
+    speed = parameters.get("speed", float(config["default_speed"]))
+    reduce_silence = parameters.get(
+        "reduce_silence", parse_reduce_silence(config["default_reduce_silence"])
+    )
 
     audio_bytes = call_text_to_speech_api(
         text=parameters["text"],
         voice=voice,
         language=language,
+        speed=speed,
+        reduce_silence=reduce_silence,
         model=config["tts_model"],
         region=region,
         api_key=config["api_key"],

@@ -10,10 +10,12 @@ import responses
 
 
 RUN_PATH = pathlib.Path(__file__).parents[1] / "text_to_speech" / "run.py"
-BASE_CONFIG: dict[str, str] = {
+BASE_CONFIG: dict[str, object] = {
     "api_key": "test-api-key",
     "default_voice": "Sebastian",
     "default_language": "en",
+    "default_speed": "1.0",
+    "default_reduce_silence": "false",
     "language_hints": "el,en",
     "tts_model": "tts-rt-v2",
     "stt_model": "stt-async-v6",
@@ -31,11 +33,13 @@ def load_run_module() -> ModuleType:
     return module
 
 
-def write_config(path: pathlib.Path, **overrides: str) -> None:
+def write_config(path: pathlib.Path, **overrides: object) -> None:
     path.write_text(json.dumps({**BASE_CONFIG, **overrides}))
 
 
-def set_stdin(monkeypatch: pytest.MonkeyPatch, parameters: dict[str, str]) -> None:
+def set_stdin(
+    monkeypatch: pytest.MonkeyPatch, parameters: dict[str, str | float | bool]
+) -> None:
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(parameters)))
 
 
@@ -97,11 +101,75 @@ def test_request_uses_region_host_and_configured_defaults(
         "model": "tts-rt-v2",
         "language": expected_language,
         "voice": expected_voice,
+        "speed": 1.0,
+        "reduce_silence": False,
         "audio_format": "mp3",
         "text": parameters["text"],
     }
     assert json.loads(capsys.readouterr().out) == {"file": "output.mp3"}
     assert (tmp_path / "output" / "output.mp3").read_bytes() == b"audio-bytes"
+
+
+@pytest.mark.parametrize(
+    ("config_values", "parameters", "expected_speed", "expected_reduce_silence"),
+    [
+        (
+            {"default_speed": "1.0", "default_reduce_silence": "false"},
+            {"text": "Hello"},
+            1.0,
+            False,
+        ),
+        (
+            {"default_speed": 0.8, "default_reduce_silence": True},
+            {"text": "Hello"},
+            0.8,
+            True,
+        ),
+        (
+            {"default_speed": "0.8", "default_reduce_silence": "true"},
+            {"text": "Hello", "speed": 1.2, "reduce_silence": False},
+            1.2,
+            False,
+        ),
+    ],
+)
+@responses.activate
+def test_speed_and_reduce_silence_come_from_config_or_request(
+    plugin: tuple[ModuleType, pathlib.Path],
+    monkeypatch: pytest.MonkeyPatch,
+    config_values: dict[str, object],
+    parameters: dict[str, str | float | bool],
+    expected_speed: float,
+    expected_reduce_silence: bool,
+) -> None:
+    module, config_path = plugin
+    write_config(config_path, **config_values)
+    set_stdin(monkeypatch, parameters)
+    responses.post("https://tts-rt.soniox.com/tts", body=b"audio-bytes")
+
+    module.main()
+
+    body = json.loads(responses.calls[0].request.body)
+    assert body["speed"] == expected_speed
+    assert body["reduce_silence"] is expected_reduce_silence
+
+
+@responses.activate
+def test_invalid_default_reduce_silence_fails_without_a_request(
+    plugin: tuple[ModuleType, pathlib.Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module, config_path = plugin
+    write_config(config_path, default_reduce_silence="yes")
+    set_stdin(monkeypatch, {"text": "Hello"})
+
+    with pytest.raises(SystemExit) as exit_info:
+        module.main()
+
+    assert exit_info.value.code == 1
+    assert "Invalid default_reduce_silence: 'yes'" in capsys.readouterr().err
+    assert len(responses.calls) == 0
 
 
 @pytest.mark.parametrize(
